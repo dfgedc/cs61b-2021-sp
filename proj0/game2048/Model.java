@@ -114,11 +114,64 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        if (side == side.NORTH)
+        {
+            for (int col = 0; col < this.board.size(); col += 1)
+            {
+                int lastp = -1;
+                for (int row = this.board.size() - 2; row >= 0; row -= 1)
+                {
+                    if (tile(col, row) == null)
+                    //me not null
+                    {
+                        continue;
+                    }
+                    if (lastp >= 0)
+                    {
+                        this.board.move(col, lastp -1, tile(col, row));
+                        changed = true;
+                        continue;
+                    }
+                    for (int prow = row; prow < this.board.size(); prow += 1)
+                    //
+                    {
+                        if (tile(col, prow) == null)
+                        {
+                            if (prow == this.board.size() -1)
+                            {
+                                this.board.move(col, prow, tile(col, row));
+                                changed = true;
+                            }
+                            continue;
+                        }
+                        if (prow != row)
+                        {
+                            if (tile(col , prow) != null)
+                            {
+                                if (tile(col, prow).value() == tile(col, row).value())
+                                {
+                                    this.board.move(col, prow, tile(col, row));
+                                    lastp = prow;
+                                    this.score += tile(col,prow).value();
+                                }else
+                                {
+                                    this.board.move(col, prow - 1, tile(col, row));
+                                }
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
+
+        //if(side==Side.NORTH){
+
+        //}
         checkGameOver();
-        if (changed) {
-
-            setChanged();
+       if (changed) {
+           setChanged();
         }
         return changed;
     }
