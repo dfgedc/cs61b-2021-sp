@@ -1,129 +1,191 @@
 package deque;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class ArrayDeque <T> implements Deque<T>{
- //   private Object[] elem;
-    //容器capacity最小值，也是2的次幂（数组初始容量保证都时2的次幂，方便使用位运算）
-    private static final int MIN_INITIAL_CAPACITY = 8;
+public class ArrayDeque <T> implements Deque<T>, Iterable<T> {
+    private T[] items;
+    private int size;
+    private int first;
+    private int last;
 
-    //存放数据数组，长度和capacity一致，并且总是2的次幂
-    transient Object[] elements;
+    public ArrayDeque() {
+        items = (T []) new Object[8];
+        size = 0;
+        first = 3;
+        last = 3;
 
-    //标记队首元素所在的位置
-    transient int head;
-
-    //标记队尾元素所在的位置
-    transient int tail;
-    public ArrayDeque(){
-        elements = new Object[16];
     }
-    private void allocateElements(int numElements) {
-        int initialCapacity = MIN_INITIAL_CAPACITY;
-        if (numElements >= initialCapacity) {
-            initialCapacity = numElements;
-            initialCapacity |= (initialCapacity >>>  1);
-            initialCapacity |= (initialCapacity >>>  2);
-            initialCapacity |= (initialCapacity >>>  4);
-            initialCapacity |= (initialCapacity >>>  8);
-            initialCapacity |= (initialCapacity >>> 16);
-            initialCapacity++;
 
-            if (initialCapacity < 0)   // Too many elements, must back off
-                initialCapacity >>>= 1;// Good luck allocating 2 ^ 30 elements
+    private void resize(int cap) {
+        T[] a = (T []) new Object[cap];
+        for (int i = 0; i < size; i++) {
+            a[3 + i] = get(i);
         }
-        elements = (T[]) new Object[initialCapacity];
-    }
-    public void addFirst(T item){
-        if(item ==null)
-            throw new NullPointerException();
-        elements[head = (head - 1) & (elements.length - 1)] = item;
-        if (head == tail)
-            doubleCapacity();
+
+        items = a;
+        first = 3;
+        last = first + size - 1;
     }
 
-    /** 在队尾添加元素 **/
-    public void addLast(T e) {
-        if (e == null)
-            throw new NullPointerException();
-        elements[tail] = e;
-        if ( (tail = (tail + 1) & (elements.length - 1)) == head)
-            doubleCapacity();
+    /** Adds x to the front of the list. */
+    @Override
+    public void addFirst(T x) {
+        if (size == items.length) {
+            resize(size * 2);
+        }
+
+        if (items[first] != null & first > 0) {
+            first -= 1;
+        } else if (items[first] != null & first == 0) {
+            first = items.length - 1;
+        }
+        items[first] = x;
+        size += 1;
     }
-    public boolean isEmpty(){
-        return head == tail;
+
+    /** Adds x to the end of the list. */
+    @Override
+    public void addLast(T x) {
+        if (size == items.length) {
+            resize(size * 2);
+        }
+        if (items[last] != null & last < items.length - 1) {
+            last += 1;
+        } else if (items[last] != null & last == items.length - 1) {
+            last = 0;
+        }
+        items[last] = x;
+        size += 1;
     }
-    public int size(){
-        return sub(tail, head, elements.length);
+
+
+    /** return the size of the list. */
+    @Override
+    public int size() {
+        return size;
     }
-    public void printDeque(){}
-    public T removeFirst(){
-        int h = head;
-        @SuppressWarnings("unchecked")
-        T result = (T) elements[h];
-        if (result == null)
+
+    /** Removes and returns the item at the front of the deque. */
+    @Override
+    public T removeFirst() {
+
+        if (size == 0) {
             return null;
-        elements[h] = null;
-        head = (h + 1) & (elements.length - 1);
-        return result;
+        }
+        T x = items[first];
+        items[first] = null;
+        size -= 1;
+        if (items.length > 8 & size < items.length / 4) {
+            first += 1;
+            resize(items.length / 2);
+        } else if (last == first) {
+            return x;
+        } else if (first < items.length - 1) {
+            first += 1;
+        } else if (first == items.length - 1) {
+            first = 0;
+        }
+        return x;
     }
-    static final int sub(int i, int j, int modulus) {
-        if ((i -= j) < 0) i += modulus;
-        return i;
-    }
-    public T removeLast(){
-        int t = (tail - 1) & (elements.length - 1);
-        @SuppressWarnings("unchecked")
-        T result = (T) elements[t];
-        if (result == null)
+
+    /** Removes and returns the item at the back of the deque. */
+    @Override
+    public T removeLast() {
+        if (size == 0) {
             return null;
-        elements[t] = null;
-        tail = t;
-        return result;
+        }
+        T x = items[last];
+        items[last] = null;
+        size -= 1;
+        if (items.length > 8 & size < items.length / 4) {
+            resize(items.length / 2);
+        } else if (last != first & last > 0) {
+            last -= 1;
+        } else if (last != first & last == 0) {
+            last = items.length - 1;
+        }
+
+        return x;
+    }
+
+
+    /** Gets the item at the given index, where 0 is the front, 1 is the next item. */
+    @Override
+    public T get(int index) {
+        if (size == 0 || (index > size - 1)) {
+            return null;
+        }
+
+        if (first + index <= items.length - 1) {
+            return items[first + index];
+        } else {
+            return items[(first + index) % items.length];
+        }
+    }
+
+    /** Prints the items in the deque from first to last, separated by a space. */
+    @Override
+    public void printDeque() {
+        int x = 0;
+        while (x < size) {
+            T y = get(x);
+            System.out.print(y + " ");
+            x++;
+        }
+        System.out.println();
+    }
+
+    /** The Deque objects we’ll make are iterable. */
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    private class ArrayDequeIterator implements Iterator<T> {
+        private int wizPos;
+
+        ArrayDequeIterator() {
+            wizPos = 0;
+        }
+
+        public boolean hasNext() {
+            return wizPos < size;
+        }
+
+        public T next() {
+            T returnItem = get(wizPos);
+            wizPos += 1;
+            return returnItem;
+        }
     }
 
     @Override
-    public T get(int index) {
-        return null;
-    }
+    public boolean equals(Object o) {
+        if (o == null) {
+            return false;
+        }
 
-    private void doubleCapacity() {
-        //只有head==tail时才可以扩容
-        assert head == tail;
-        int p = head;
-        int n = elements.length;
-        //在head之后，还有多少元素
-        int r = n - p; // number of elements to the right of p
-        //直接翻倍，因为capacity初始化时就已经是2的倍数了，这里无需再考虑
-        int newCapacity = n << 1;
-        if (newCapacity < 0)
-            throw new IllegalStateException("Sorry, deque too big");
-        Object[] a = new Object[newCapacity];
-        //左侧数据拷贝
-        System.arraycopy(elements, p, a, 0, r);
-        //右侧数据拷贝
-        System.arraycopy(elements, 0, a, r, p);
-        elements = a;
-        head = 0;
-        tail = n;
-    }
-    public T getFirst() {
-        @SuppressWarnings("unchecked")
-        T result = (T) elements[head];
-        if (result == null)
-            throw new NoSuchElementException();
-        return result;
-    }
+        /* do they refer to the same object? */
+        if (this == o) {
+            return true;
+        }
 
-    /**
-     * @throws NoSuchElementException {@inheritDoc}
-     */
-    public T getLast() {
-        @SuppressWarnings("unchecked")
-        T result = (T) elements[(tail - 1) & (elements.length - 1)];
-        if (result == null)
-            throw new NoSuchElementException();
-        return result;
+        if (!(o instanceof Deque)) {
+            return false;
+        }
+
+        Deque other = (Deque) o;
+
+        if (this.size() != other.size()) {
+            return false;
+        }
+
+        for (int index = 0; index < size; index++) {
+            if (!((this.get(index)).equals(other.get(index)))) {
+                return false;
+            }
+        }
+
+        return true;
     }
- //   public T get(int index){}
 }
