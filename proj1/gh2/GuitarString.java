@@ -1,12 +1,8 @@
 package gh2;
 
-// TODO: uncomment the following import once you're ready to start this portion
 import deque.*;
 
-import java.util.Random;
-// TODO: maybe more imports
 
-//Note: This file will not compile until you complete the Deque implementations
 public class GuitarString {
     /** Constants. Do not change. In case you're curious, the keyword final
      * means the values cannot be changed at runtime. We'll discuss this and
